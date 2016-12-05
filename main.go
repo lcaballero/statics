@@ -14,9 +14,15 @@ func main() {
 func server() {
 	ip := ":5555"
 	root := ".www"
+	index := "index.html"
+	prefix := "/assets/"
 
 	router := mux.NewRouter()
-	handling.BasicStaticRoute(root, router.NewRoute())
+	handling.BasicStaticRoute(
+		root,
+		prefix,
+		index,
+		router.NewRoute())
 
 	fmt.Printf("binding sever to %s\n", ip)
 
