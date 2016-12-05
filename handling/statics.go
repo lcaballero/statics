@@ -4,33 +4,13 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
-	"os"
-	"path/filepath"
 )
-
-// RouteFileSystem is a http.FileSystem using the given route
-// directory to find files.
-type RouteFileSystem struct {
-	Root string
-}
-
-// Open turns the FileProvider interface into a http.FileSystem.
-func (sf RouteFileSystem) Open(name string) (http.File, error) {
-	file := filepath.Join(sf.Root, name)
-	fmt.Println("attempting to open: ", name, file)
-	if name == "/" {
-
-	}
-	return os.Open(file)
-}
 
 // BasicStaticRoute sets up a route for serving static assets
 // directly from the file system.
-func BasicStaticRoute(root string, route *mux.Route) {
-	prefix := "/assets/"
+func BasicStaticRoute(root, prefix, index string, route *mux.Route) {
 	r := route.PathPrefix(prefix).
-		MatcherFunc(AssetMatcher(prefix)).
-		HandlerFunc(FromRoot(root)).
+		HandlerFunc(FromRoot(root, prefix)).
 		Methods("GET")
 
 	err := r.GetError()
@@ -41,10 +21,9 @@ func BasicStaticRoute(root string, route *mux.Route) {
 
 // FromRoot creates a handler with a file system rooted at the
 // provided root location.
-func FromRoot(root string) http.HandlerFunc {
-	fs := RouteFileSystem{Root: root}
-	fserve := http.FileServer(fs)
-	return HandleStatics(root, fserve)
+func FromRoot(local, remote string) http.HandlerFunc {
+	fs := NewRouteFileSystem(local, remote)
+	return HandleStatics(local, fs)
 }
 
 // HandleStatics internally creates a FileServer to handle serving
@@ -55,21 +34,25 @@ func FromRoot(root string) http.HandlerFunc {
 // variables.
 func HandleStatics(root string, fs http.Handler) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		var vars Vars = Vars{
-			vars: mux.Vars(req),
-			req:  req,
+		fmt.Println("\nrequested: ", req.RequestURI)
+
+		vars := Vars{
+			AssetVars: AssetVars{},
+			req:       req,
 		}
-		parts := Path(req.URL.Path).Parts()[1:]
-		vars.vars.AcquireVars(parts)
+
+		// By definition Parts has to include at least [assets] as prefix.
+		parts := Path(req.URL.Path).Parts()
+		vars.AcquireVars(parts)
 
 		if vars.IsDebugOn() {
 			dbg := debug{res: res, req: req}
 			dbg.ToLog()
 		}
 
+		fmt.Println(parts, req.URL.Path, req.RequestURI)
 		filereq := vars.RewritePath(req)
-		fmt.Println("vars:", vars.vars, filereq.URL.Path, filereq.RequestURI)
+		fmt.Println("serving file:", filereq.URL.Path, filereq.RequestURI)
 		fs.ServeHTTP(res, filereq)
-		fmt.Println("should served: ", root, filereq.URL.Path, filereq.RequestURI)
 	}
 }

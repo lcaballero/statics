@@ -1,8 +1,8 @@
 package handling
+
 import (
-	"strings"
-	"path/filepath"
 	"fmt"
+	"strings"
 )
 
 // AssetVars key/value pairs.
@@ -30,21 +30,8 @@ func (a AssetVars) Path() string {
 }
 
 func (m AssetVars) AcquireVars(parts Parts) {
-	if len(parts) == 1 {
-		m["path"] = "/"
-		m["file"] = parts.Last()
-		return
-	}
-	if len(parts) > 1 {
-		m["path"] = "/" + strings.Join(parts.NighAll(), "/")
-		m["file"] = parts.Last()
-		return
-	}
-}
+	fmt.Println("acquire vars:", parts, parts.Len())
 
-func (m AssetVars) HasPrefix(path, prefix string) bool {
-	p := filepath.Clean(path)
-	pre := filepath.Clean(prefix)
-	fmt.Println("path", path, "p", p, "pre", pre)
-	return strings.HasPrefix(p, pre)
+	m["path"] = "/" + strings.Join(parts.NighAll(), "/")
+	m["file"] = parts.Last()
 }

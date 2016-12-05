@@ -28,6 +28,8 @@ func (p Path) Parts() Parts {
 			parts = append(parts, p)
 		}
 	}
-	parts = append(parts, file)
+	if file != "" {
+		parts = append(parts, file)
+	}
 	return parts
 }

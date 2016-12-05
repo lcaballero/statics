@@ -1,9 +1,9 @@
 package handling
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
-	"fmt"
 )
 
 // DefaultDebugKey the query parameter key name used by default but can be
@@ -13,7 +13,7 @@ const DefaultDebugKey = "statics_debug"
 // Vars represent a wrapper around http request parameters that
 // can be used to make decisions about how to serve static files.
 type Vars struct {
-	vars     AssetVars
+	AssetVars
 	req      *http.Request
 	debugKey string
 }
@@ -53,13 +53,13 @@ func (v Vars) IsDebugOn() bool {
 // the raw query string.
 func (v Vars) RewritePath(req *http.Request) *http.Request {
 	//TODO: return original req if 'ext' key doesn't exist
-	path := v.vars["path"]
+	path := v.AssetVars["path"]
 
 	//TODO: return original req if 'name' key doesn't exist
-	file := v.vars["file"]
+	file := v.AssetVars["file"]
 
 	newfile := filepath.Join(path, file)
-	fmt.Println("rewrite path:", path, file, newfile)
+	fmt.Println("rewrite path:", req.RequestURI, req.URL.Path, newfile)
 
 	req2 := *req
 	url2 := *req.URL
